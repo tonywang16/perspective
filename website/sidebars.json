@@ -1,0 +1,9 @@
+{
+  "docs": {
+    "Getting Started": ["installation", "usage"],
+    "API": ["perspective_api", "viewer_api"]
+  },
+  "docs-other": {
+    "First Category": ["doc4", "doc5"]
+  }
+}
