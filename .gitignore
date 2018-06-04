@@ -96,7 +96,7 @@ node_modules
 *.mem
 ftpsync.settings
 *.log
-*.png
+screenshots/
 Gemfile
 Gemfile.lock
 Vagrantfile
