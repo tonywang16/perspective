@@ -22,7 +22,7 @@ const users = [
 
 const siteConfig = {
   title: 'Perspective' /* title for your website */,
-  tagline: 'Streaming Data Analytics via WebAssembly',
+  tagline: 'Streaming Analytics via WebAssembly',
   url: 'https://jpmorganchase.github.io/' /* your website url */,
   baseUrl: '/perspective/' /* base url for your project */,
   // For github.io type URLs, you would set the url and baseUrl like:
@@ -41,6 +41,7 @@ const siteConfig = {
     {doc: 'installation', label: 'Docs'},
     {doc: 'viewer_api', label: 'API'},
     {blog: true, label: 'Blog'},
+    {href: 'https://github.com/jpmorganchase/perspective/', label: 'GitHub'},
   ],
 
   // If you have users set above, you add it here:

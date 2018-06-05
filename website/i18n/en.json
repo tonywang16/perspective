@@ -3,7 +3,7 @@
   "localized-strings": {
     "next": "Next",
     "previous": "Previous",
-    "tagline": "Streaming Data Analytics via WebAssembly",
+    "tagline": "Streaming Analytics via WebAssembly",
     "installation": "Installation",
     "Installation": "Installation",
     "perspective_api": "Perspective Library API",
@@ -14,6 +14,7 @@
     "Docs": "Docs",
     "API": "API",
     "Blog": "Blog",
+    "GitHub": "GitHub",
     "Getting Started": "Getting Started",
     "First Category": "First Category"
   },
