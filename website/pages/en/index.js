@@ -59,7 +59,7 @@ const Logo = props => (
 const ProjectTitle = props => (
   <h2 className="projectTitle">
     {siteConfig.title}
-    <small>{siteConfig.tagline}</small>
+    <small>Streaming Analytics <i>via</i> WebAssembly</small>
   </h2>
 );
 
@@ -83,18 +83,16 @@ class HomeSplash extends React.Component {
           </perspective-viewer>
 
           <PromoSection>
-            <Button href="https://unpkg.com/@jpmorganchase/perspective-examples/build/superstore-arrow.html">Table (10,000 x 21)</Button>
-            <Button href="https://unpkg.com/@jpmorganchase/perspective-examples/build/citibike.html">NYC Citibike</Button>
-            <Button href="https://unpkg.com/@jpmorganchase/perspective-examples/build/streaming.html">Random Stream</Button>
-            <Button href="https://unpkg.com/@jpmorganchase/perspective-examples/build/coincap.html">Coincap.io Realtime</Button>
-            <Button href="https://unpkg.com/@jpmorganchase/perspective-examples/build/theme-material.html">Styling</Button>
+            <Button href="https://jsfiddle.net/user/texodus/fiddles/">Examples</Button>
+            <Button href="https://jpmorganchase.github.io/perspective/docs/installation.html">Docs</Button>
+            <Button href="https://www.npmjs.com/package/@jpmorganchase/perspective">NPM</Button>
+            <Button href="https://github.com/jpmorganchase/perspective">Github</Button>
           </PromoSection>
         </div>
       </SplashContainer>
     );
   }
 }
-
 
 const Block = props => (
   <Container
@@ -121,7 +119,7 @@ const Features = props => (
         title: 'Powerful',
       },
       {
-        content: 'Vetted in production on the J.P. Morgan trading floor.',
+        content: 'Engineered for reliability and production-vetted on the J.P. Morgan trading floor, now available to the development community as Open Source',
         image: imgUrl('baseline-security-24px.svg'),
         imageAlign: 'top',
         title: 'Industrial',
@@ -135,7 +133,7 @@ const FeatureCallout = props => (
     className="productShowcaseSection paddingBottom"
     style={{textAlign: 'center'}}>
     <h2>Features</h2>
-    <MarkdownBlock>
+    <MarkdownBlock background="dark">
 A fast, memory efficient streaming pivot engine written principally in C++ and
 compiled to both WebAssembly and asm.js via the
 [emscripten](https://github.com/kripken/emscripten) compiler.
@@ -186,10 +184,10 @@ const Description = props => (
   <Block background="dark">
     {[
       {
-        content: 'This is another description of how this project is useful',
-        image: imgUrl('docusaurus.svg'),
+     //   content: 'We created Perspective to help our users answer questions about their <i>data</i>, without relying on chart settings, style options, or tedious configuration.',
+       // image: imgUrl('2018-10-01-v0.2.0-release/hierarchial.png'),
         imageAlign: 'right',
-        title: 'Description',
+       // title: 'Ask Your Data',
       },
     ]}
   </Block>
@@ -234,10 +232,12 @@ class Index extends React.Component {
         <HomeSplash language={language} />
         <div className="mainContainer">
           <Features />
+          {/* <Description />  */}
+          <FeatureCallout />
           {/* <FeatureCallout />
           <LearnHow />
           <TryOut />
-          <Description /> */}
+          */}
           {/* <Showcase language={language} /> */}
         </div>
       </div>

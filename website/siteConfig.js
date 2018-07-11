@@ -39,7 +39,7 @@ const siteConfig = {
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     {doc: 'installation', label: 'Docs'},
-    {doc: 'viewer_api', label: 'API'},
+    {doc: 'perspective-viewer', label: 'API'},
     {blog: true, label: 'Blog'},
     {href: 'https://github.com/jpmorganchase/perspective/', label: 'GitHub'},
   ],
@@ -78,20 +78,21 @@ const siteConfig = {
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks
-    theme: 'default',
+    theme: 'monokai',
   },
 
   // Add custom scripts here that would be placed in <script> tags
   scripts: [
     'https://buttons.github.io/buttons.js', 
-    'https://unpkg.com/@jpmorganchase/perspective-examples/build/perspective.view.js',
-    'https://unpkg.com/@jpmorganchase/perspective-examples/build/hypergrid.plugin.js',
-    'https://unpkg.com/@jpmorganchase/perspective-examples/build/highcharts.plugin.js',
+    'https://unpkg.com/@jpmorganchase/perspective-viewer/build/perspective.view.js',
+    'https://unpkg.com/@jpmorganchase/perspective-viewer-hypergrid/build/hypergrid.plugin.js',
+    'https://unpkg.com/@jpmorganchase/perspective-viewer-highcharts/build/highcharts.plugin.js',
     'js/animation.js'
   ],
 
   stylesheets: [
-    'https://unpkg.com/@jpmorganchase/perspective-examples/build/material.css'
+    'https://unpkg.com/@jpmorganchase/perspective-examples/build/material.dark.css',
+    'https://fonts.googleapis.com/css?family=Montserrat:300'
   ],
 
   /* On page navigation for the current documentation page */

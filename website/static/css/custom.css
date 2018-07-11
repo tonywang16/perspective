@@ -28,6 +28,10 @@
     max-width: 1000px;
 }
 
+a {
+    color: #1A7DA1 !important;
+}
+
 .titleViewer ul {
     background: none !important;
 }
@@ -41,6 +45,41 @@
     color: #1A7DA1 !important;
 }
 
-.mainContainer img {
+.mainContainer .blockImage img {
     width: 100px;
+}
+
+perspective-viewer #config_button:before {
+    font-family: "Material Icons";
+    content: "more_vert" !important;
+}
+
+perspective-viewer #app {
+    background-color: #2A2C2F !important;
+}
+
+.homeContainer {
+    background-color: #242526;
+}
+
+.homeContainer .projectTitle {
+    color: #f9f9f9;
+    font-family: "Montserrat";
+}
+
+.homeContainer .projectTitle i {
+    font-size: 18px;
+}
+
+.homeContainer .buttonWrapper a {
+    border: 1px solid #f9f9f9;
+    color: #f9f9f9 !important;
+}
+
+.nav-footer a {
+    color: #f9f9f9 !important;
+}
+
+.nav-footer a:hover {
+    color: #1A7DA1 !important;
 }
