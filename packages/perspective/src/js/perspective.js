@@ -1050,20 +1050,22 @@ table.prototype.computed_schema = async function() {
  * @param {Array<string>} [config.column_pivot] An array of column names
  * to use as {@link https://en.wikipedia.org/wiki/Pivot_table#Column_labels Column Pivots}.
  * @param {Array<Object>} [config.aggregate] An Array of Aggregate configuration objects,
- * each of which should provide an "name" and "op" property, repsresnting the string
+ * each of which should provide an "name" and "op" property, representing the string
  * aggregation type and associated column name, respectively.  Aggregates not provided
  * will use their type defaults
  * @param {Array<Array<string>>} [config.filter] An Array of Filter configurations to
  * apply.  A filter configuration is an array of 3 elements:  A column name,
  * a supported filter comparison string (e.g. '===', '>'), and a value to compare.
- * @param {Array<string>} [config.sort] An Array of column names by which to sort.
- *
+ * @param {Array<Array<string>>} [config.sort] An Array of sort configurations
+ * consisting of a column name and the sort order by which to sort. Sort order options 
+ * are defined in {@link SORT_ORDERS}
+ * 
  * @example
  * var view = table.view({
  *      row_pivot: ['region'],
  *      aggregate: [{op: 'dominant', column:'region'}],
  *      filter: [['client', 'contains', 'fred']],
- *      sort: ['value']
+ *      sort: [['value', 'asc']]
  * });
  *
  * @returns {view} A new {@link view} object for the supplied configuration,

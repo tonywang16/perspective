@@ -1015,18 +1015,19 @@ class View extends ViewPrivate {
     }
    
     /**
-     * Sets this `perspective.table.view`'s `sort` property, an array of column
-     * names.
+     * Sets this `perspective.table.view`'s `sort` property, an array of sort configurations
+     * consisting of a column name and the sort order by which to sort. Sort order options 
+     * are defined in {@link perspective/src/js/defaults.js}
      * 
      * @name sort
      * @memberof View.prototype
-     * @type {array<string>} Array of column names
+     * @type {array<array<string>>} Array of sort column configurations
      * @fires View#perspective-config-update
      * @example <caption>via Javascript DOM</caption>
      * let elem = document.getElementById('my_viewer');
-     * elem.setAttribute('sort', JSON.stringify(["x"]));
+     * elem.setAttribute('sort', JSON.stringify([["x", "asc"]]));
      * @example <caption>via HTML</caption>
-     * <perspective-viewer sort='["x"]'></perspective-viewer>
+     * <perspective-viewer sort='[["x", "asc"]]'></perspective-viewer>
      */
     @array_attribute
     set sort(sort) {

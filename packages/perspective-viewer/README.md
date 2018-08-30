@@ -49,8 +49,9 @@ HTMLElement class for `<perspective-viewer` custom element.
 
 ### sort
 
-Sets this `perspective.table.view`'s `sort` property, an array of column
-names.
+Sets this `perspective.table.view`'s `sort` property, an array of sort configurations
+consisting of a column name and the sort order by which to sort. Sort order options 
+are defined in [perspective/src/js/defaults.js][27]
 
 **Examples**
 
@@ -58,13 +59,13 @@ _via Javascript DOM_
 
 ```javascript
 let elem = document.getElementById('my_viewer');
-elem.setAttribute('sort', JSON.stringify(["x"]));
+elem.setAttribute('sort', JSON.stringify([["x", "asc"]]));
 ```
 
 _via HTML_
 
 ```javascript
-<perspective-viewer sort='["x"]'></perspective-viewer>
+<perspective-viewer sort='[["x", "asc"]]'></perspective-viewer>
 ```
 
 ### columns
@@ -73,7 +74,7 @@ The set of visible columns.
 
 **Parameters**
 
--   `columns` **[array][27]** An array of strings, the names of visible columns.
+-   `columns` **[array][28]** An array of strings, the names of visible columns.
 
 **Examples**
 
@@ -100,7 +101,7 @@ The set of column aggregate configurations.
     values are valid aggregations.  The `aggergates` attribute works as an
     override;  in lieu of a key for a column supplied by the developers, a
     default will be selected and reflected to the attribute based on the
-    column's type.  See [perspective/src/js/defaults.js][28]
+    column's type.  See [perspective/src/js/defaults.js][27]
 
 **Examples**
 
@@ -150,7 +151,7 @@ Sets the currently selected plugin, via its `name` field.
 
 ### view
 
-This element's `perpsective.table.view` instance.  The instance itself
+This element's `perspective.table.view` instance.  The instance itself
 will change after every `View#perspective-config-update` event.
 
 ### column-pivots
@@ -192,7 +193,7 @@ elem.setAttribute('message', '<h1>Loading</h1>');
 
 This element's `perspective` worker instance.  This property is not 
 reflected as an HTML attribute, and is readonly;  it can be effectively 
-set however by calliong the `load() method with a`perspective.table\` 
+set however by calling the `load() method with a`perspective.table\`
 instance from the preferred worker.
 
 **Examples**
@@ -261,7 +262,7 @@ my_viewer.update([
 
 ### notifyResize
 
-Invalidate this element's dimensions and redraw.
+Determine whether to reflow the viewer and redraw.
 
 ### copy
 
@@ -376,9 +377,9 @@ updated, including every invocation of `load` and `update`.
 
 [26]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[27]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[27]: perspective/src/js/defaults.js
 
-[28]: perspective/src/js/defaults.js
+[28]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
 [29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
 
