@@ -11,7 +11,8 @@ import {COLUMN_SEPARATOR_STRING} from "@jpmorganchase/perspective/src/js/default
 
 function row_to_series(series, sname, gname) {
     let s;
-    for (var sidx = 0; sidx < series.length; sidx++) {
+    let sidx = 0;
+    for (sidx; sidx < series.length; sidx++) {
         let is_group = typeof gname === "undefined" || series[sidx].stack === gname;
         if (series[sidx].name == sname && is_group) {
             s = series[sidx];
@@ -32,6 +33,21 @@ function row_to_series(series, sname, gname) {
     return s;
 }
 
+function column_to_series(series, sname, gname) {
+    let s = {
+        name: sname,
+        connectNulls: true,
+        data: series.map(val => val === undefined || val === "" ? null : val)
+    };
+
+    if (gname) {
+        s.stack = gname;
+    }
+
+    return s;
+}
+
+// preserve for backwards compatibility
 class TreeAxisIterator {
 
     constructor(depth, json) {
@@ -75,11 +91,35 @@ class TreeAxisIterator {
     }
 }
 
-class ColumnsIterator {
+// new columnar parsing
+class ColumnarAxisIterator extends TreeAxisIterator {
+
+    constructor(depth, columns) {
+        super(depth);
+        this.columns = columns;
+        this.fill_axis();
+    }
+
+    // recursively generate axis categories from column
+    fill_axis() {
+        let label = this.top;
+        for (let path of this.columns.__ROW_PATH__) {
+            if (path.length > 0 && path.length < this.depth) {
+                label = this.add_label(path);
+            } else if (path.length >= this.depth) {
+                label.categories.push(path[path.length - 1]);     
+                continue;
+            }
+        }
+    }
+}
+
+// preserve for backwards-compatibility
+class RowIterator {
 
     constructor(rows, hidden) {
-        this.rows = rows
-        this.hidden = hidden
+        this.rows = rows;
+        this.hidden = hidden;
     }
 
     *[Symbol.iterator]() {
@@ -101,27 +141,52 @@ class ColumnsIterator {
     }
 }
 
-export function make_y_data(js, pivots, hidden) {
-    let rows = new TreeAxisIterator(pivots.length, js);
-    let rows2 = new ColumnsIterator(rows, hidden);
-    var series = [];
+// new columnar parsing
+class ColumnsIterator {
 
-    for (let row of rows2) {
-        for (let prop of rows2.columns) {
-            let sname = prop.split(COLUMN_SEPARATOR_STRING);
-            let gname = sname[sname.length - 1];
-            if (rows2.is_stacked) {
-                sname = sname.join(", ") || gname;
-            } else {
-                sname = sname.slice(0, sname.length - 1).join(", ") || " ";
+    constructor(columns, hidden) {
+        this.columns = columns;
+        this.hidden = [...hidden, "hidden", "column_names"];
+        this.column_names = Object.keys(this.columns).filter(prop => {
+                    let cname = prop.split(COLUMN_SEPARATOR_STRING);
+                    cname = cname[cname.length - 1];
+                    return prop !== "__ROW_PATH__" && this.hidden.indexOf(cname) === -1;
+                });
+    }
+
+    *[Symbol.iterator]() {
+        for (let column in this.columns) {
+            if (this.column_names.includes(column)) {
+                /* this.is_stacked = this.columns.map(value =>
+                    value.substr(value.lastIndexOf(COLUMN_SEPARATOR_STRING) + 1, value.length)
+                ).filter((value, index, self) =>
+                    self.indexOf(value) === index
+                ).length > 1; */
+                let sname = name.split(COLUMN_SEPARATOR_STRING);
+                let gname = sname[sname.length - 1];
+                if (this.is_stacked) {
+                    sname = sname.join(", ") || gname;
+                } else {
+                    sname = sname.slice(0, sname.length - 1).join(", ") || " ";
+                }
+                yield {column: this.columns[column], sname, gname};
             }
-            let s = row_to_series(series, sname, gname);
-            let val = row[prop];
-            val = (val === undefined || val === "" ? null : val)
-            s.data.push(val);
         }
     }
-    return [series, rows.top];
+}
+
+export function make_y_data(cols, pivots, hidden) {
+    let series = [];
+    let axis = new ColumnarAxisIterator(pivots.length, cols);
+    console.log(axis);
+    let columns = new ColumnsIterator(cols, hidden);
+    console.log(columns);
+    for (let col of columns) {
+        console.log(col);
+        series.push(column_to_series(col.column, col.sname, col.gname));
+    }
+    console.log(series, axis);
+    return [series, axis.top];
 }
 
 /******************************************************************************
@@ -207,7 +272,7 @@ class MakeTick {
 
 export function make_xy_data(js, schema, columns, pivots, col_pivots, hidden) {
     let rows = new TreeAxisIterator(pivots.length, js);
-    let rows2 = new ColumnsIterator(rows, hidden);
+    let rows2 = new RowIterator(rows, hidden);
     let series = [];
     let colorRange = [Infinity, -Infinity];
     let make_tick = new MakeTick(schema, columns);
@@ -395,7 +460,7 @@ function make_configs(series, levels) {
 
 export function make_tree_data(js, row_pivots, hidden, aggregates, leaf_only) {
     let rows = new TreeIterator(row_pivots.length, js);
-    let rows2 = new ColumnsIterator(rows, hidden);
+    let rows2 = new RowIterator(rows, hidden);
     let series = [];
 
     for (let row of rows2) {

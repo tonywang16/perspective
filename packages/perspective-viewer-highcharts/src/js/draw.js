@@ -22,7 +22,9 @@ export const draw = (mode) => async function (el, view, task) {
     const aggregates = this._get_view_aggregates();
     const hidden = this._get_view_hidden(aggregates);
 
-    const [js, schema, tschema] = await Promise.all([view.to_json(), view.schema(), this._table.schema()]);
+    const [js, cols, schema, tschema] = await Promise.all([view.to_json(), view.to_columns(), view.schema(), this._table.schema()]);
+    console.log(js);
+    console.log(cols);
 
     if (task.cancelled) {
         return;
@@ -122,7 +124,7 @@ export const draw = (mode) => async function (el, view, task) {
         set_both_axis(config, 'yAxis', yaxis_name, yaxis_type, yaxis_type, ytop);
     } else {
         let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
-        let [series, top, ] = make_y_data(js, row_pivots, hidden);
+        let [series, top, ] = make_y_data(cols, row_pivots, hidden);
         config.series = series;
         config.colors = series.length <= 10 ? COLORS_10 : COLORS_20;        
         config.legend.enabled = col_pivots.length > 0 || series.length > 1;
