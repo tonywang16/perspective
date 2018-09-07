@@ -122,6 +122,7 @@ export const draw = (mode) => async function (el, view, task) {
         set_both_axis(config, 'yAxis', yaxis_name, yaxis_type, yaxis_type, ytop);
     } else {
         let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
+        // utilize columnar data
         let [series, top, ] = make_y_data(cols, row_pivots, hidden);
         config.series = series;
         config.colors = series.length <= 10 ? COLORS_10 : COLORS_20;        
