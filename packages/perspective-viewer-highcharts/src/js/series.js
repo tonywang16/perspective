@@ -15,6 +15,7 @@ function row_to_series(series, sname, gname) {
     for (sidx; sidx < series.length; sidx++) {
         let is_group = typeof gname === "undefined" || series[sidx].stack === gname;
         if (series[sidx].name == sname && is_group) {
+            //console.log(series[sidx], sidx, series);
             s = series[sidx];
             break;
         }
@@ -33,7 +34,8 @@ function row_to_series(series, sname, gname) {
     return s;
 }
 
-function column_to_series(series, sname, gname) {
+/*unction column_to_series(series, sname, gname) {
+    // TODO: prevent unmapped-to-pivot values from showing, empty __ROW_PATH__ should not show
     let s = {
         name: sname,
         connectNulls: true,
@@ -45,7 +47,7 @@ function column_to_series(series, sname, gname) {
     }
 
     return s;
-}
+}*/
 
 // preserve for backwards compatibility
 class TreeAxisIterator {
@@ -103,6 +105,11 @@ class ColumnarAxisIterator extends TreeAxisIterator {
     // recursively generate axis categories from column
     fill_axis() {
         let label = this.top;
+
+        if (this.columns.__ROW_PATH__ === undefined) {
+            return;
+        }
+
         for (let path of this.columns.__ROW_PATH__) {
             if (path.length > 0 && path.length < this.depth) {
                 label = this.add_label(path);
@@ -142,9 +149,10 @@ class RowIterator {
 }
 
 // new columnar parsing
-class ColumnsIterator {
+class ColumnToRowIterator {
 
-    constructor(columns, hidden) {
+    // TODO: write a column parser that does not rely on conversion to row
+    constructor(columns, hidden, pivot_length) {
         this.columns = columns;
         this.hidden = [...hidden, "hidden", "column_names"];
         this.column_names = Object.keys(this.columns).filter(prop => {
@@ -152,25 +160,29 @@ class ColumnsIterator {
                     cname = cname[cname.length - 1];
                     return prop !== "__ROW_PATH__" && this.hidden.indexOf(cname) === -1;
                 });
+        this.is_stacked = this.column_names.map(value =>
+            value.substr(value.lastIndexOf(COLUMN_SEPARATOR_STRING) + 1, value.length)
+        ).filter((value, index, self) =>
+            self.indexOf(value) === index
+        ).length > 1;
+        this.pivot_length = pivot_length;
     }
 
     *[Symbol.iterator]() {
-        for (let column in this.columns) {
-            if (this.column_names.includes(column)) {
-                /* this.is_stacked = this.columns.map(value =>
-                    value.substr(value.lastIndexOf(COLUMN_SEPARATOR_STRING) + 1, value.length)
-                ).filter((value, index, self) =>
-                    self.indexOf(value) === index
-                ).length > 1; */
-                let sname = name.split(COLUMN_SEPARATOR_STRING);
-                let gname = sname[sname.length - 1];
-                if (this.is_stacked) {
-                    sname = sname.join(", ") || gname;
-                } else {
-                    sname = sname.slice(0, sname.length - 1).join(", ") || " ";
-                }
-                yield {column: this.columns[column], sname, gname};
+        // convert columnar data to row
+        let i = 0;
+        for (i; i < this.columns[this.column_names[0]].length; i++) {
+            let row = {};
+            // TODO: fix the total row problem at source
+            if (this.columns.__ROW_PATH__) {
+                if (this.columns.__ROW_PATH__[i].length !== this.pivot_length) continue;
             }
+            for (let name of this.column_names) {
+                if (!this.hidden.includes(name) && name !== "__ROW_PATH__") {
+                    row[name] = this.columns[name][i];
+                }
+            }
+            yield row;
         }
     }
 }
@@ -178,15 +190,47 @@ class ColumnsIterator {
 export function make_y_data(cols, pivots, hidden) {
     let series = [];
     let axis = new ColumnarAxisIterator(pivots.length, cols);
-    console.log(axis);
-    let columns = new ColumnsIterator(cols, hidden);
-    console.log(columns);
-    for (let col of columns) {
-        console.log(col);
-        series.push(column_to_series(col.column, col.sname, col.gname));
+    let row_data = new ColumnToRowIterator(cols, hidden, pivots.length);
+    for (let row of row_data) {
+        for (let name of Object.keys(row)) {
+            let sname = name.split(COLUMN_SEPARATOR_STRING);
+            let gname = sname[sname.length - 1];
+            if (row_data.is_stacked) {
+                sname = sname.join(", ") || gname;
+            } else {
+                sname = sname.slice(0, sname.length - 1).join(", ") || " ";
+            }
+            let s = row_to_series(series, sname, gname);
+            let val = row[name];
+            val = (val === undefined || val === "" ? null : val)
+            s.data.push(val);
+        }
     }
-    console.log(series, axis);
     return [series, axis.top];
+}
+
+// preserve old behavior for heatmaps
+export function make_y_heatmap_data(js, pivots, hidden) {
+    let rows = new TreeAxisIterator(pivots.length, js);
+    let rows2 = new RowIterator(rows, hidden);
+    var series = [];
+
+    for (let row of rows2) {
+        for (let prop of rows2.columns) {
+            let sname = prop.split(COLUMN_SEPARATOR_STRING);
+            let gname = sname[sname.length - 1];
+            if (rows2.is_stacked) {
+                sname = sname.join(", ") || gname;
+            } else {
+                sname = sname.slice(0, sname.length - 1).join(", ") || " ";
+            }
+            let s = row_to_series(series, sname, gname);
+            let val = row[prop];
+            val = (val === undefined || val === "" ? null : val)
+            s.data.push(val);
+        }
+    }
+    return [series, rows.top];
 }
 
 /******************************************************************************
@@ -356,7 +400,7 @@ function make_tree_axis(series) {
 }
 
 export function make_xyz_data(js, pivots, hidden, ytree_type) {
-    let [series, top] = make_y_data(js, pivots, hidden);
+    let [series, top] = make_y_heatmap_data(js, pivots, hidden);
     if (ytree_type !== 'string' && ytree_type !== undefined) {
         series = series.reverse();
     }

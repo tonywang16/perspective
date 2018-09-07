@@ -23,8 +23,6 @@ export const draw = (mode) => async function (el, view, task) {
     const hidden = this._get_view_hidden(aggregates);
 
     const [js, cols, schema, tschema] = await Promise.all([view.to_json(), view.to_columns(), view.schema(), this._table.schema()]);
-    console.log(js);
-    console.log(cols);
 
     if (task.cancelled) {
         return;

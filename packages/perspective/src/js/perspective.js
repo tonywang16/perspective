@@ -669,8 +669,9 @@ const to_format = async function (options, formatter) {
  * "row_pivots" config parameter supplied when constructed, each row Object
  * will have a "__ROW_PATH__" key, whose value specifies this row's
  * aggregated path.  If this {@link view} had a "column_pivots" config
- * parameter supplied, the keys of this object will be comma-prepended with
- * their comma-separated column paths.
+ * parameter supplied, the keys of this object are both prepended and
+ * their column paths separated by `COLUMN_SEPARATOR_STRING` as set in
+ * `defaults.js`.
  */
 view.prototype.to_columns = async function (options) {
     return to_format.call(this, options, formatters.jsonTableFormatter);
@@ -695,9 +696,10 @@ view.prototype.to_columns = async function (options) {
  * representing the rows of this {@link view}.  If this {@link view} had a
  * "row_pivots" config parameter supplied when constructed, each row Object
  * will have a "__ROW_PATH__" key, whose value specifies this row's
- * aggregated path.  If this {@link view} had a "column_pivots" config
- * parameter supplied, the keys of this object will be comma-prepended with
- * their comma-separated column paths.
+ * aggregated path.   If this {@link view} had a "column_pivots" config
+ * parameter supplied, the keys of this object are both prepended and
+ * their column paths separated by `COLUMN_SEPARATOR_STRING` as set in
+ * `defaults.js`.
  */
 view.prototype.to_json = async function (options) {
     return to_format.call(this, options, formatters.jsonFormatter);
