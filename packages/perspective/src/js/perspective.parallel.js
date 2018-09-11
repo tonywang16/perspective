@@ -164,14 +164,20 @@ class WebWorker extends worker {
         this._worker.postMessage({cmd: 'init', path: __SCRIPT_PATH__.path()});
         this._detect_transferable();
         this._worker.onmessage = (msg) => {
-            // FIXME: quick and dirty
-            if(msg.data.data !== undefined) {
-                console.log("worker buffers:", msg.data.data.buffers);
+            if (this._worker.transferable) {
+                let buffers;
+                try {
+                    buffers = msg.data.data.buffers;
+                } catch(err) {
+                    buffers = {};
+                }
+                for (let name in buffers) {
+                    let buffer = buffers[name];
+                    console.log("on worker:", buffer, buffer.byteLength);      
+                }
             }
         }
     }
-
-    // TODO: implement ArrayBuffer and Transferable interface
 }
 
 class WebSocketWorker extends worker {
@@ -183,7 +189,7 @@ class WebSocketWorker extends worker {
             this.send({id: -1, cmd: 'init'});
         };
         this._ws.onmessage = (msg, transfer) => {
-            console.log("websocket: ", msg, transfer);
+            console.log("websocket:", msg, transfer);
             this._handle({data: JSON.parse(msg.data)});
             if (transfer.length > 0) {
                 console.log(transfer);

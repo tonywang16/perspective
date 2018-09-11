@@ -23,6 +23,9 @@ export const draw = (mode) => async function (el, view, task) {
     const hidden = this._get_view_hidden(aggregates);
 
     const [schema, tschema] = await Promise.all([view.schema(), this._table.schema()]);
+    const ab = await view.to_arraybuffer();
+
+    console.log(ab);
 
     let js;
 

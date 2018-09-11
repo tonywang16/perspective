@@ -762,6 +762,7 @@ view.prototype.to_csv = async function (options) {
  */
 view.prototype.to_arraybuffer = async function (options) {
     const [columns, schema] = await Promise.all([this.to_columns(options), this.schema()]);
+    columns["ab_schema"] = {};
     
     for (let name in schema) {
         let arr;
@@ -775,7 +776,8 @@ view.prototype.to_arraybuffer = async function (options) {
         } else {
             continue;
         }
-
+        
+        columns["ab_schema"][name] = type;
         columns[name] = arr;
     }
 
@@ -1759,7 +1761,7 @@ class Host {
                         });
                     }
                 } else {
-                    obj[msg.method].apply(obj, msg.args).then(result => {
+                    obj[msg.method].apply(obj, msg.args).then(data => {
                         let transfer = [];
                         let buffers = {};
 
@@ -1768,21 +1770,23 @@ class Host {
                         }  
                         
                         if (msg.method === "to_arraybuffer") {
-                            // TODO: pass transferrable plus all the arraybuffers in the message
-                            buffers = get_arraybuffers(result);
+                            buffers = get_arraybuffers(data);
                             transfer = Object.values(buffers);
-                            result.buffers = buffers;
+                            data.buffers = buffers;
                         }
 
                         this.post({
                             id: msg.id,
-                            data: result,
+                            data,
                         }, transfer);
 
+                        // TODO: transferable polyfill, feature detection
                         for (let ab of transfer) {
-                            console.log(ab.byteLength);
+                            console.log("on main:", ab, ab.byteLength);
+                            if (ab.byteLength > 0) {
+                                throw new Error("ArrayBuffer did not successfully transfer.");
+                            }
                         }
-
                         
                     }).catch(error => {
                         this.post({
