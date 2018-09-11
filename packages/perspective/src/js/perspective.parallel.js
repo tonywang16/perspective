@@ -99,6 +99,9 @@ class WebWorker extends worker {
         this._worker = w;
         this._worker.addEventListener('message', this._handle.bind(this));
         this._worker.postMessage({cmd: 'init', data: window.__PSP_WASM__, path: __SCRIPT_PATH__.path()});
+        this._worker.onmessage = (msg, transfer) => {
+            console.log("embedded:", msg, transfer);
+        }
         this._detect_transferable();
     }
     
@@ -110,6 +113,9 @@ class WebWorker extends worker {
             }
             this._worker.postMessage = worker.postMessage.bind(worker);
             this._worker.terminate = worker.terminate.bind(worker);
+            this._worker.onmessage = (msg, transfer) => {
+                console.log("cross origin:", msg, transfer);
+            }
             this._worker = worker;
             this._detect_transferable();
             this._worker.addEventListener('message', this._handle.bind(this));
@@ -157,6 +163,12 @@ class WebWorker extends worker {
         this._worker.addEventListener('message', this._handle.bind(this));
         this._worker.postMessage({cmd: 'init', path: __SCRIPT_PATH__.path()});
         this._detect_transferable();
+        this._worker.onmessage = (msg) => {
+            // FIXME: quick and dirty
+            if(msg.data.data !== undefined) {
+                console.log("worker buffers:", msg.data.data.buffers);
+            }
+        }
     }
 
     // TODO: implement ArrayBuffer and Transferable interface
@@ -170,8 +182,12 @@ class WebSocketWorker extends worker {
         this._ws.onopen = () => {
             this.send({id: -1, cmd: 'init'});
         };
-        this._ws.onmessage = (msg) => {
+        this._ws.onmessage = (msg, transfer) => {
+            console.log("websocket: ", msg, transfer);
             this._handle({data: JSON.parse(msg.data)});
+            if (transfer.length > 0) {
+                console.log(transfer);
+            }
         }
     }
 

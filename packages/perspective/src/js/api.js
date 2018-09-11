@@ -60,9 +60,6 @@ view.prototype.to_csv = async_queue('to_csv');
 
 view.prototype.to_arraybuffer = async_queue('to_arraybuffer');
 
-
-
-
 view.prototype.schema = async_queue('schema');
 
 view.prototype.num_columns = async_queue('num_columns');

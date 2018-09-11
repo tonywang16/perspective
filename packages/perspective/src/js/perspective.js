@@ -1606,6 +1606,21 @@ function error_to_json(error) {
     return obj;
 }
 
+function is_arraybuffer(value) {
+    return value && value.buffer instanceof ArrayBuffer && value.byteLength !== undefined;
+}
+
+function get_arraybuffers(columns) {
+    let buffers = {};
+    for (let col in columns) {
+        let data = columns[col];
+        if (is_arraybuffer(data)) {
+            buffers[col] = (data.buffer);
+        }
+    }
+    return buffers;
+}
+
 class Host {
 
     constructor() {
@@ -1745,13 +1760,30 @@ class Host {
                     }
                 } else {
                     obj[msg.method].apply(obj, msg.args).then(result => {
+                        let transfer = [];
+                        let buffers = {};
+
                         if (msg.method === "delete") {
                             delete this._views[msg.name];
+                        }  
+                        
+                        if (msg.method === "to_arraybuffer") {
+                            // TODO: pass transferrable plus all the arraybuffers in the message
+                            buffers = get_arraybuffers(result);
+                            transfer = Object.values(buffers);
+                            result.buffers = buffers;
                         }
+
                         this.post({
                             id: msg.id,
-                            data: result
-                        });
+                            data: result,
+                        }, transfer);
+
+                        for (let ab of transfer) {
+                            console.log(ab.byteLength);
+                        }
+
+                        
                     }).catch(error => {
                         this.post({
                             id: msg.id,
@@ -1772,8 +1804,8 @@ class WorkerHost extends Host {
         self.addEventListener('message', e => this.process(e.data), false);
     }
 
-    post(msg) {
-        self.postMessage(msg);
+    post(msg, transfer = []) {
+        self.postMessage(msg, transfer);
     }
 
     init(msg) {
