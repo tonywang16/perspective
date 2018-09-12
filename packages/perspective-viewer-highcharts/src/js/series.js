@@ -12,6 +12,7 @@ import {COLUMN_SEPARATOR_STRING} from "@jpmorganchase/perspective/src/js/default
 function row_to_series(series, sname, gname) {
     let s;
     let sidx = 0;
+    // TODO: figure out what this does
     for (sidx; sidx < series.length; sidx++) {
         let is_group = typeof gname === "undefined" || series[sidx].stack === gname;
         if (series[sidx].name == sname && is_group) {
@@ -92,18 +93,37 @@ class TreeAxisIterator {
     }
 }
 
-// Column-based axis generator
-class ColumnarAxisIterator extends TreeAxisIterator {
-
-    constructor(depth, columns) {
-        super(depth);
+class ChartAxis {
+    constructor(columns, depth) {
         this.columns = columns;
+        this.depth = depth;
+        this.axis = {name: "", depth: 0, categories: []};
         this.fill_axis();
     }
 
-    // No need for custom iterator - call on instantiation
+    add_label(path) {
+        let label = {
+            name: path[path.length - 1],
+            depth: path.length,
+            categories: []
+        }
+
+        // Find the correct parent
+        var parent = this.axis;
+        for (var lidx = 0; lidx < path.length - 1; lidx++) {
+            for (var cidx = 0; cidx < parent.categories.length; cidx++) {
+                if (parent.categories[cidx].name === path[lidx]) {
+                    parent = parent.categories[cidx];
+                    break;
+                }
+            }
+        }
+        parent.categories.push(label);
+        return label;
+    }
+
     fill_axis() {
-        let label = this.top;
+        let label = this.axis;
 
         if (this.columns.__ROW_PATH__ === undefined) {
             return;
@@ -146,16 +166,17 @@ class RowIterator {
     }
 }
 
-class ColumnarIterator {
+class ColumnIterator {
 
     constructor(columns, hidden, pivot_length) {
         this.columns = columns;
         this.hidden = [...hidden, "hidden", "column_names"];
-        this.column_names = Object.keys(this.columns).filter(prop => {
-                    let cname = prop.split(COLUMN_SEPARATOR_STRING);
-                    cname = cname[cname.length - 1];
-                    return prop !== "__ROW_PATH__" && !this.hidden.includes(cname);
-                });
+        this.column_names = Object.keys(this.columns).filter(
+            prop => {
+                let cname = prop.split(COLUMN_SEPARATOR_STRING);
+                cname = cname[cname.length - 1];
+                return prop !== "__ROW_PATH__" && !this.hidden.includes(cname);
+            });
         this.is_stacked = this.column_names.map(value =>
             value.substr(value.lastIndexOf(COLUMN_SEPARATOR_STRING) + 1, value.length)
         ).filter((value, index, self) =>
@@ -167,10 +188,11 @@ class ColumnarIterator {
     *[Symbol.iterator]() {
         for (let name of this.column_names) {
             let data = this.columns[name];
-            // Manually remove total columns, remove once fix is complete on engine
             if (this.columns.__ROW_PATH__) {
-                data = data.filter((val, idx) =>
-                    this.columns.__ROW_PATH__[idx].length === this.pivot_length);
+                data = data.filter(
+                    (_, idx) => {
+                        return this.columns.__ROW_PATH__[idx].length === this.pivot_length;
+                    });        
             }
             yield {name, data};
         }
@@ -179,8 +201,8 @@ class ColumnarIterator {
 
 export function make_y_data(cols, pivots, hidden) {
     let series = [];
-    let axis = new ColumnarAxisIterator(pivots.length, cols);
-    let columns = new ColumnarIterator(cols, hidden, pivots.length);
+    let axis = new ChartAxis(cols, pivots.length);
+    let columns = new ColumnIterator(cols, hidden, pivots.length);
     for (let col of columns) {
         let sname = col.name.split(COLUMN_SEPARATOR_STRING);
         let gname = sname[sname.length - 1];
@@ -193,7 +215,7 @@ export function make_y_data(cols, pivots, hidden) {
         series.push(s);
     }
     
-    return [series, axis.top];
+    return [series, axis.axis];
 }
 
 // Preserve old behavior for heatmaps
@@ -302,6 +324,7 @@ class MakeTick {
 }
 
 export function make_xy_data(js, schema, columns, pivots, col_pivots, hidden) {
+    // TODO: use column data
     let rows = new TreeAxisIterator(pivots.length, js);
     let rows2 = new RowIterator(rows, hidden);
     let series = [];

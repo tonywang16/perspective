@@ -22,7 +22,9 @@ export const draw = (mode) => async function (el, view, task) {
     const aggregates = this._get_view_aggregates();
     const hidden = this._get_view_hidden(aggregates);
 
-    const [js, cols, schema, tschema] = await Promise.all([view.to_json(), view.to_columns(), view.schema(), this._table.schema()]);
+    const [schema, tschema] = await Promise.all([view.schema(), this._table.schema()]);
+
+    let js;
 
     if (task.cancelled) {
         return;
@@ -55,6 +57,7 @@ export const draw = (mode) => async function (el, view, task) {
         num_aggregates = aggregates.length - hidden.length;
 
     if (mode === 'scatter') {
+        js = await view.to_json();
         let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
         let [series, xtop, colorRange, ytop] = make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
         config.legend.floating = series.length <= 20;
@@ -76,6 +79,7 @@ export const draw = (mode) => async function (el, view, task) {
         set_both_axis(config, 'yAxis', yaxis_name, yaxis_type, yaxis_type, ytop);
         set_tick_size.call(this, config);
     } else if (mode === 'heatmap') {
+        js = await view.to_json();
         let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
         let [series, top, ytop, colorRange] = make_xyz_data(js, row_pivots, hidden, ytree_type);
         config.series = [{
@@ -92,6 +96,7 @@ export const draw = (mode) => async function (el, view, task) {
         set_category_axis(config, 'yAxis', ytree_type, ytop);
 
     } else if (mode === "treemap" || mode === "sunburst") {
+        js = await view.to_json();
         let [charts, , colorRange] = make_tree_data(js, row_pivots, hidden, aggregates, mode === "treemap");
         for (let series of charts) {
             let config = default_config.call(this, aggregates, mode, js, col_pivots);
@@ -107,6 +112,7 @@ export const draw = (mode) => async function (el, view, task) {
             configs.push(config);
         }
     } else if (mode === 'line') {
+        js = await view.to_json();
         let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
         let [series, xtop, , ytop] = make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
         const colors = series.length <= 10 ? COLORS_10 : COLORS_20;
@@ -121,8 +127,8 @@ export const draw = (mode) => async function (el, view, task) {
         set_both_axis(config, 'xAxis', xaxis_name, xaxis_type, xaxis_type, xtop);
         set_both_axis(config, 'yAxis', yaxis_name, yaxis_type, yaxis_type, ytop);
     } else {
-        let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
-        // utilize columnar data
+        let config = configs[0] = default_config.call(this, aggregates, mode);
+        let cols = await view.to_columns();
         let [series, top, ] = make_y_data(cols, row_pivots, hidden);
         config.series = series;
         config.colors = series.length <= 10 ? COLORS_10 : COLORS_20;        
