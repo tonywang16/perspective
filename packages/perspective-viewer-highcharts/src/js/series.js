@@ -38,7 +38,7 @@ function column_to_series(data, sname, gname) {
     let s = {
         name: sname,
         connectNulls: true,
-        data: data.map(val => (val === undefined || val === "" ? null : val))
+        data
     };
 
     if (gname) {
@@ -189,10 +189,13 @@ class ColumnIterator {
         for (let name of this.column_names) {
             let data = this.columns[name];
             if (this.columns.__ROW_PATH__) {
-                data = data.filter(
-                    (_, idx) => {
-                        return this.columns.__ROW_PATH__[idx].length === this.pivot_length;
-                    });        
+                let filtered_data = [];
+                for (let i = 0; i < data.length; i++) {
+                    if (this.columns.__ROW_PATH__[i].length === this.pivot_length) {
+                        filtered_data.push(data[i]);
+                    }
+                }
+                data = filtered_data; 
             }
             yield {name, data};
         }
@@ -211,7 +214,10 @@ export function make_y_data(cols, pivots, hidden) {
         } else {
             sname = sname.slice(0, sname.length - 1).join(", ") || " ";
         }
-        let s = column_to_series(col.data, sname, gname);
+        let s = column_to_series(
+            col.data.map(val => val === undefined || val === "" ? null : val), 
+            sname, 
+            gname);
         series.push(s);
     }
     
@@ -324,43 +330,25 @@ class MakeTick {
         return tick;
     }
 
-    /* FIXME: reduce number of parameters for this function
-     * Currently, we need a large num of parameters to handle situation with & without column pivot
-     * with no column pivot, we could feed in a ColumnIterator and run a for-of, and derive the
-     * col_names, num_cols, and row_path values from the ColumnIterator class.
-     * 
-     * Because this function needs to handle situations with column pivots, we can no longer feed in
-     * ColumnIterator classes and must feed in cols as an {name: data} object. The associated metadata
-     * must come in separate params. Composition of metadata into one cols object is possible, but 
-     * is messy inside make_xy_col_data().
-     * 
-     * Other optimizations:
-     * 
-     * When col_pivot > 0, data is an array with length = row_pivot.length, yet most values 
-     * can be null. Reduction of data to an array with guaranteed values is trivial, but we lose
-     * the ability to index into __ROW_PATH__ for the name. Could either compose __ROW_PATH__[i] and 
-     * data[i] into a row-like object, but that defeats the purpose of conversion to columnar data. Usage
-     * of a dictionary vector could work here, where {index_in_reduced_data: regular_index_of_row_path} allows for
-     * quick mapping of a reduced dataset onto a large __ROW_PATH__
-     * 
-     * Introducing schema and mapping the names of each tick to their proper types, thus allowing for
-     * proper display names - thinking of unix timestamps being converted to datestrings here.
-     */
     make_col(cols, col_names, num_cols, pivot_length, row_path, color_range) {
         let ticks = [];
-        let data = [];
+        let data = cols;
 
-        for (let name of col_names) {
-            // FIXME: order becomes guaranteed here as col_names is an array, but I want to make it dependably ordered.
-            data.push(cols[name]);
+        if (cols.length === 0) {
+            return ticks;
         }
 
-        if (data.length === 0) {
-            return [];
+        if (cols.length === undefined) {
+            // Dealing with a ColumnIterator object - must map data to 2D array properly
+            data = [];
+            for (let name of col_names) {
+                data.push(cols[name]);
+            }
         }
 
         for (let i = 0; i < data[0].length; i++) {
-            if(!data[0][i]) {
+            if(data[0][i] === null || data[0][i] === undefined || data[0][i] === "") {
+                data[0][i] = null;
                 continue;
             }
 
@@ -370,7 +358,7 @@ class MakeTick {
                 if (row_path[i].length !== pivot_length) {
                     continue;
                 }
-                
+
                 tick.name = row_path[i].join(", ");
             }
 
@@ -412,87 +400,58 @@ class MakeTick {
         }
 
         return ticks;
-    }
+    }    
 }
 
-export function make_xy_column_data(cols, schema, aggs, pivots, col_pivots, hidden) {
+export async function make_xy_column_data(cols, schema, aggs, pivots, col_pivots, hidden) {
     const columns = new ColumnIterator(cols, hidden, pivots.length);
-
     let series = [];
     let color_range = [Infinity, -Infinity];
     let make_tick = new MakeTick(schema, columns.column_names);
 
     let row_path = columns.columns.__ROW_PATH__;
-    let num_cols = columns.column_names.length;
 
     if (col_pivots.length === 0) {
-    
-        // FIXME: reduce number of parameters
         let ticks = make_tick.make_col(
-            columns.columns, 
-            columns.column_names, 
-            num_cols, 
+            columns.columns,
+            columns.column_names,
+            aggs.length,
             columns.pivot_length,
-            columns.columns.__ROW_PATH__, 
+            row_path,
             color_range
         );
             
         let s = column_to_series(ticks, ' ');   
-        series = [s]; 
+        series.push(s); 
     } else {
         let groups = {};
-        let names = {};
 
         if (row_path) {
-            // remove empty first elem
-            row_path = row_path.slice(1, row_path.length);
+            // remove all total rows
+            let clean_row_path = [];
+
+            for (let i = 0; i < row_path.length; i++) {
+                if (row_path[i].length === columns.pivot_length) {
+                    clean_row_path.push(row_path[i]);
+                }
+            }
+            
+            row_path = clean_row_path;
         }
 
-        /* FIXME: reduce repeated loop calls
-         *
-         * Loops here repeat because we need to figure out the proper placement of data, splitting the
-         * composed column name into its parts and creating a map of how the data breaks down according to
-         * column pivot and aggregate.
-         * 
-         * The first loop goes through each name and unrolls it into its components:
-         *  - group, which is the value of the column_pivot
-         *  - n levels, which are the aggregates under the group
-         * 
-         * We cache those values for use in the second loop.
-         * 
-         * The second loop goes through columns, using the result of the iterable to assign data arrays to
-         * their proper place. Names are retrieved from the cache in order to map data. ORDER MAY NOT BE GUARANTEED,
-         * as we treat the levels as an Object instead of an Array. 
-         * 
-         * Though order becomes guaranteed at he point of processing, I want to make it more deterministic and 
-         * reduce places where the data flow can fail. Consistency between ADTs here is important.
-         * 
-         * Further optimization is possible here - if we don't use the aggregate names (the very last level where data is assigned), 
-         * then we can use an array and simply index in for x, y, and color.
-         * 
-         * The last loop goes through each group and creates ticks for each series of data. Optimization here is unlikely -
-         * every value under column pivot is a series, and needs to be visualized as such. ArrayBuffers inside the data could provide 
-         * some boost, but most of the computation still occurs on the main thread.
-         * 
-         */
-        for (let name of columns.column_names) {
-            let column_levels = name.split(COLUMN_SEPARATOR_STRING);
+        for (let col of columns) {
+            let column_levels = col.name.split(COLUMN_SEPARATOR_STRING);
             let group_name = column_levels.slice(0, column_levels.length - 1).join(", ") || " ";
 
-            names[name] = {column_levels, group_name} // TODO: replace stop-gap caching
-            groups[group_name] = {};
-        }
-        
-        for (let col of columns) {
-            let column_levels = names[col.name]["column_levels"];
-            let group_name = names[col.name]["group_name"];
-            let agg_name = column_levels[column_levels.length - 1];
+            if (groups[group_name] === undefined) {
+                groups[group_name] = [];
+            }
 
-            groups[group_name][agg_name] = col.data;
+            groups[group_name].push(col.data);
         }
 
+        // FIXME: this is the heaviest loop
         for (let name in groups) {
-            // FIXME: reduce number of parameters
             let ticks = make_tick.make_col(
                 groups[name], 
                 aggs, 
@@ -507,14 +466,10 @@ export function make_xy_column_data(cols, schema, aggs, pivots, col_pivots, hidd
         }
     }
 
-    console.log(series);
-    
     return [series, {categories: make_tick.xaxis_clean.names}, color_range, {categories: make_tick.yaxis_clean.names}];
 }
 
-export function make_xy_data(js, schema, columns, pivots, col_pivots, hidden) {
-    console.log(columns);
-    // TODO: use column data
+export async function make_xy_data(js, schema, columns, pivots, col_pivots, hidden) {
     let rows = new TreeAxisIterator(pivots.length, js);
     let rows2 = new RowIterator(rows, hidden);
     let series = [];
@@ -538,7 +493,7 @@ export function make_xy_data(js, schema, columns, pivots, col_pivots, hidden) {
         });
         for (let prop of cols) {
             let column_levels = prop.split(COLUMN_SEPARATOR_STRING);
-            let group_name = column_levels.slice(0, column_levels.length - 1).join(",") || " ";
+            let group_name = column_levels.slice(0, column_levels.length - 1).join(", ") || " ";
             if (prev === undefined) {
                 prev = group_name;
             }
@@ -564,7 +519,6 @@ export function make_xy_data(js, schema, columns, pivots, col_pivots, hidden) {
         }
     }   
 
-    console.log(series);
     return [series, {categories: make_tick.xaxis_clean.names}, colorRange, {categories: make_tick.yaxis_clean.names}];   
 }
 

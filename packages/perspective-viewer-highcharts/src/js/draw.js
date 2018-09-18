@@ -34,17 +34,6 @@ export const draw = (mode) => async function (el, view, task) {
         this._charts = [];
     }
 
-    if (this.hasAttribute('updating') && this._charts.length > 0) {
-        for (let chart of this._charts) {
-            try {
-                chart.destroy();
-            } catch (e) {
-                console.warn("Scatter plot destroy() call failed - this is probably leaking memory");
-            }
-        }
-        this._charts = [];
-    }
-
     let configs = [],
         xaxis_name = aggregates.length > 0 ? aggregates[0].column : undefined,
         xaxis_type = schema[xaxis_name],
@@ -57,11 +46,23 @@ export const draw = (mode) => async function (el, view, task) {
         num_aggregates = aggregates.length - hidden.length;
 
     if (mode === 'scatter') {
-        js = await view.to_json();
-        const cols = await view.to_columns();
-        let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
-        make_xy_column_data(cols, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
-        let [series, xtop, colorRange, ytop] = make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+        let s;
+        let config = configs[0] = default_config.call(this, aggregates, mode);
+
+        // determine whether to use column/row data
+        if (col_pivots.length === 0) {
+            const cols = await view.to_columns();
+            s = await make_xy_column_data(cols, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+        } else {  
+            js = await view.to_json();
+            s = await make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+        } 
+
+        const series = s[0];
+        const xtop = s[1];
+        const colorRange = s[2];
+        const ytop = s[3];
+
         config.legend.floating = series.length <= 20;
         config.legend.enabled = col_pivots.length > 0;
         config.series = series;
@@ -114,9 +115,21 @@ export const draw = (mode) => async function (el, view, task) {
             configs.push(config);
         }
     } else if (mode === 'line') {
-        js = await view.to_json();
+        let s;
         let config = configs[0] = default_config.call(this, aggregates, mode, js, col_pivots);
-        let [series, xtop, , ytop] = make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+
+        if (col_pivots.length === 0) {
+            const cols = await view.to_columns();
+            s = await make_xy_column_data(cols, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+        } else {  
+            js = await view.to_json();
+            s = await make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+        } 
+        
+        const series = s[0];
+        const xtop = s[1];
+        const ytop = s[3];
+
         const colors = series.length <= 10 ? COLORS_10 : COLORS_20;
         config.legend.floating = series.length <= 20;
         config.legend.enabled = col_pivots.length > 0;
@@ -154,6 +167,17 @@ export const draw = (mode) => async function (el, view, task) {
         });
     }
 
+    if (this.hasAttribute('updating') && this._charts.length > 0) {
+        for (let chart of this._charts) {
+            try {
+                chart.destroy();
+            } catch (e) {
+                console.warn("Scatter plot destroy() call failed - this is probably leaking memory");
+            }
+        }
+        this._charts = [];
+    }
+
     if (this._charts.length > 0) {
         let idx = 0;
         for (let chart of this._charts) {
@@ -184,7 +208,10 @@ export const draw = (mode) => async function (el, view, task) {
             this._charts.push(() => Highcharts.chart(chart, config));
         }
 
-        this._charts = this._charts.map(x => x());
+        for (let i = 0; i < this._charts.length; i++) {
+            this._charts[i] = this._charts[i]();
+        }
+        //this._charts = this._charts.map(x => x());
     }
 
     if (!this._charts.every(x => document.contains(x.renderTo))) {
