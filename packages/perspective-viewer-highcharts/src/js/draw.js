@@ -46,22 +46,9 @@ export const draw = (mode) => async function (el, view, task) {
         num_aggregates = aggregates.length - hidden.length;
 
     if (mode === 'scatter') {
-        let s;
-        let config = configs[0] = default_config.call(this, aggregates, mode);
-
-        // determine whether to use column/row data
-        if (col_pivots.length === 0) {
-            const cols = await view.to_columns();
-            s = await make_xy_column_data(cols, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
-        } else {  
-            js = await view.to_json();
-            s = await make_xy_data(js, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
-        } 
-
-        const series = s[0];
-        const xtop = s[1];
-        const colorRange = s[2];
-        const ytop = s[3];
+        const cols = await view.to_columns();
+        const [series, xtop, colorRange, ytop] = make_xy_column_data(cols, schema, aggregates.map(x => x.column), row_pivots, col_pivots, hidden);
+        const config = configs[0] = default_config.call(this, aggregates, mode);
 
         config.legend.floating = series.length <= 20;
         config.legend.enabled = col_pivots.length > 0;
