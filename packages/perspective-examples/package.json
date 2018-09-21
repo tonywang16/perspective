@@ -25,6 +25,7 @@
     "test:build": "npm run copy",
     "test:run": "echo \"No Tests\"",
     "test": "npm-run-all test:build test:run",
+    "watch:psp": "webpack --color --watch --config ../perspective/test/config/perspective.config.js --context ../perspective/ --output-path ../perspective-examples/build",
     "watch:view": "webpack --color --watch --config ../perspective-viewer/test/config/view.config.js --context ../perspective-viewer/ --output-path ../perspective-examples/build",
     "watch:highcharts": "webpack --color --watch --config ../perspective-viewer-highcharts/test/config/highcharts.config.js --context ../perspective-viewer-highcharts/ --output-path ../perspective-examples/build",
     "copy": "mkdir -p build && npm-run-all -p copy:*",

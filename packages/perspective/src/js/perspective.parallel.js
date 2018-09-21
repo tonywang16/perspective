@@ -158,6 +158,8 @@ class WebWorker extends worker {
         this._worker.postMessage({cmd: 'init', path: __SCRIPT_PATH__.path()});
         this._detect_transferable();
     }
+
+    // TODO: implement ArrayBuffer and Transferable interface
 }
 
 class WebSocketWorker extends worker {
