@@ -1,0 +1,26 @@
+{
+  "name": "perspective2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "lerna run build --stream",
+    "precompile": "mkdir -p obj",
+    "compile": "cd obj/ && emcmake cmake ../ && emmake make -j${PSP_CPU_COUNT-8}",
+    "postcompile": "node scripts/compile",
+    "postinstall": "npx lerna bootstrap"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-eslint": "^8.2.3",
+		"eslint": "^4.19.1",
+		"eslint-config-prettier": "^3.0.1",
+		"eslint-plugin-prettier": "^2.6.2",
+    "lerna": "^3.4.0",
+    "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1",
+    "prettier": "^1.14.3"
+  }
+}

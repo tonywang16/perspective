@@ -1,0 +1,17 @@
+{
+  "name": "@jpmorganchase-examples/perspective-js-umd-api",
+  "version": "1.0.0",
+  "description": "A simple playground for the UMD API",
+  "scripts": {
+    "start": "http-server ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@jpmorganchase/perspective-js": "^1.0.0"
+  },
+  "devDependencies": {
+    "http-server": "*"
+  }
+}

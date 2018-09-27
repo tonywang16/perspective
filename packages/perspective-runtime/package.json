@@ -1,0 +1,19 @@
+{
+  "name": "@jpmorganchase/perspective-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Perspective build and shared runtime libraries",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apache-arrow/es5-esm": "^0.3.1",
+    "d3-array": "^1.2.1",
+    "moment": "^2.19.1",
+    "papaparse": "^4.3.6",
+    "underscore": "^1.8.3"
+  }
+}

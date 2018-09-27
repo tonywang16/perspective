@@ -1,0 +1,15 @@
+# Ignore Boost
+src/include/boost
+
+# C++ compile directory
+obj
+
+# NODE STUFF
+build
+packages/*/es
+packages/*/obj
+packages/*/umd
+node_modules
+
+# Stuff
+.DS_Store
