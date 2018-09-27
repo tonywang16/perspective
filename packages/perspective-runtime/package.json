@@ -1,6 +1,5 @@
 {
   "name": "@jpmorganchase/perspective-runtime",
-  "private": true,
   "version": "1.0.0",
   "description": "Perspective build and shared runtime libraries",
   "scripts": {

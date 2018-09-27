@@ -8,16 +8,17 @@
     "precompile": "mkdir -p obj",
     "compile": "cd obj/ && emcmake cmake ../ && emmake make -j${PSP_CPU_COUNT-8}",
     "postcompile": "node scripts/compile",
-    "postinstall": "npx lerna bootstrap"
+    "postinstall": "npx lerna bootstrap",
+    "lint": "eslint ./**/*.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "babel-eslint": "^8.2.3",
-		"eslint": "^4.19.1",
-		"eslint-config-prettier": "^3.0.1",
-		"eslint-plugin-prettier": "^2.6.2",
+    "eslint": "^4.19.1",
+    "eslint-config-prettier": "^3.0.1",
+    "eslint-plugin-prettier": "^2.6.2",
     "lerna": "^3.4.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
