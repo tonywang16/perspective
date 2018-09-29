@@ -1832,6 +1832,9 @@ module.exports = function(Module) {
                 pool.register_gnode(gnode);
                 __MODULE__.fill(pool, gnode, tbl);
 
+                let ab = __MODULE__.col_to_arraybuffer(tbl, "Sales");
+                console.log(ab);
+
                 if (chunked) {
                     while (pdata.cdata[0].length > 0) {
                         tbl.delete();
@@ -1847,6 +1850,9 @@ module.exports = function(Module) {
                         __MODULE__.fill(pool, gnode, tbl);
                     }
                 }
+
+                // TODO: remove this part
+                // __MODULE__.col_to_arraybuffer(tbl, "")
 
                 return new table(gnode, pool, options.index, undefined, options.limit, limit_index);
             } catch (e) {
