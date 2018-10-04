@@ -121,3 +121,7 @@ cmake-build-debug
 
 package.json.lerna_backup
 website/static/css/material.dark.css
+
+# CPP Compile
+src/include/boost
+obj
